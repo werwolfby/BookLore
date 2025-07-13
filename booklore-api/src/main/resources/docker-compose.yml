@@ -1,0 +1,19 @@
+﻿services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.5
+    container_name: booklore_mariadb
+    volumes:
+      - D:\Himic\.DB\BookLore:/config
+    restart: unless-stopped
+    ports:
+      - 3333:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=Password123
+      - MYSQL_DATABASE=booklore
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=Password123
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
