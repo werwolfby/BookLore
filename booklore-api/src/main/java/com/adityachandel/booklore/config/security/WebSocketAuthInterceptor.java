@@ -61,10 +61,15 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 String username = jwtUtils.extractUsername(token);
                 return new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
             }
-            JWTClaimsSet claims = dynamicOidcJwtProcessor.getProcessor().process(token, null);
-            if (claims != null) {
-                String username = claims.getSubject();
-                return new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+
+            try {
+                JWTClaimsSet claims = dynamicOidcJwtProcessor.getProcessor().process(token, null);
+                if (claims != null) {
+                    String username = claims.getSubject();
+                    return new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                }
+            } catch (IllegalStateException e) {
+                log.debug("OIDC authentication skipped: {}", e.getMessage());
             }
         } catch (Exception e) {
             log.debug("Token authentication failed", e);

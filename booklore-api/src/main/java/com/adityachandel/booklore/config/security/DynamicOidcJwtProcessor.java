@@ -31,7 +31,12 @@ public class DynamicOidcJwtProcessor {
     private volatile String currentIssuerUri;
 
     public synchronized ConfigurableJWTProcessor<SecurityContext> getProcessor() throws Exception {
-        String issuerUri = appSettingService.getAppSettings().getOidcProviderDetails().getIssuerUri();
+        OidcProviderDetails oidcDetails = appSettingService.getAppSettings().getOidcProviderDetails();
+        if (oidcDetails == null || oidcDetails.getIssuerUri() == null) {
+            throw new IllegalStateException("OIDC provider details are not configured");
+        }
+
+        String issuerUri = oidcDetails.getIssuerUri();
         if (jwtProcessor == null || !issuerUri.equals(currentIssuerUri)) {
             this.jwtProcessor = buildProcessor(issuerUri);
             this.currentIssuerUri = issuerUri;
