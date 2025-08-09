@@ -2,6 +2,7 @@ package com.adityachandel.booklore.service;
 
 import com.adityachandel.booklore.model.dto.settings.LibraryFile;
 import com.adityachandel.booklore.model.entity.*;
+import com.adityachandel.booklore.model.enums.AdditionalFileType;
 import com.adityachandel.booklore.model.enums.BookFileType;
 import com.adityachandel.booklore.repository.*;
 import com.adityachandel.booklore.util.FileUtils;
@@ -9,8 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 
@@ -22,10 +21,11 @@ public class BookCreatorService {
     private final AuthorRepository authorRepository;
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
+    private final BookAdditionalFileRepository bookAdditionalFileRepository;
     private final BookMetadataRepository bookMetadataRepository;
 
     public BookEntity createShellBook(LibraryFile libraryFile, BookFileType bookFileType) {
-        long fileSizeKb = FileUtils.getFileSizeInKb(libraryFile.getFullPath());
+        Long fileSizeKb = FileUtils.getFileSizeInKb(libraryFile.getFullPath());
         BookMetadataEntity metadata = BookMetadataEntity.builder().build();
         BookEntity bookEntity = BookEntity.builder()
                 .library(libraryFile.getLibraryEntity())
@@ -38,6 +38,23 @@ public class BookCreatorService {
                 .metadata(metadata)
                 .build();
         return bookRepository.saveAndFlush(bookEntity);
+    }
+
+    public void addAdditionalFileToBook(BookEntity bookEntity, LibraryFile libraryFile, AdditionalFileType additionalFileType) {
+        Long fileSizeKb = FileUtils.getFileSizeInKb(libraryFile.getFullPath());
+        String hash = FileFingerprint.generateHash(libraryFile.getFullPath());
+        BookAdditionalFileEntity additionalFile = BookAdditionalFileEntity.builder()
+                .book(bookEntity)
+                .fileName(libraryFile.getFileName())
+                .fileSubPath(libraryFile.getFileSubPath())
+                .additionalFileType(additionalFileType)
+                .fileSizeKb(fileSizeKb)
+                .initialHash(hash)
+                .currentHash(hash)
+                .addedOn(java.time.Instant.now())
+                .build();
+
+        bookAdditionalFileRepository.save(additionalFile);
     }
 
     public void addCategoriesToBook(Set<String> categories, BookEntity bookEntity) {
